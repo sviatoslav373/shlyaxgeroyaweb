@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d0e">
+  <title>Кришталеве озеро: вижити</title>
+  <style>
+    /* ---------- Токени ---------- */
+    :root {
+      --bg: #0b0d0e;
+      --panel: #151a1c;
+      --line: #262e31;
+      --text: #e4e8e5;
+      --muted: #8c9a97;
+      --blood: #d6342c;
+      --accent: #f0b24a;
+      --ok: #6fd09a;
+      --btn: #1b2326;
+      --btn-active: #273236;
+      --vig: 0;
+      --beat: 2.4s;
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color-scheme: dark;
+    }
+
+    @media (prefers-color-scheme:light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #f1f0ec;
+        --panel: #e6e4de;
+        --line: #c9c6bd;
+        --text: #1b1f20;
+        --muted: #5d6764;
+        --blood: #b3241c;
+        --accent: #8a5800;
+        --ok: #1d6b40;
+        --btn: #dedbd3;
+        --btn-active: #cfcbc1;
+        color-scheme: light;
+      }
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f1f0ec;
+      --panel: #e6e4de;
+      --line: #c9c6bd;
+      --text: #1b1f20;
+      --muted: #5d6764;
+      --blood: #b3241c;
+      --accent: #8a5800;
+      --ok: #1d6b40;
+      --btn: #dedbd3;
+      --btn-active: #cfcbc1;
+      color-scheme: light;
+    }
+
+    /* Рівень загрози керує віньєткою та темпом пульсу */
+    body[data-danger="0"] {
+      --vig: 0;
+      --beat: 2.4s
+    }
+
+    body[data-danger="1"] {
+      --vig: .18;
+      --beat: 1.8s
+    }
+
+    body[data-danger="2"] {
+      --vig: .34;
+      --beat: 1.2s
+    }
+
+    body[data-danger="3"] {
+      --vig: .55;
+      --beat: .7s
+    }
+
+    body[data-danger="4"] {
+      --vig: .8;
+      --beat: 0s
+    }
+
+    /* ---------- Основа ---------- */
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font: 18px/1.6 var(--sans);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body::after {
+      /* червона віньєтка: чим небезпечніше, тим густіша */
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      box-shadow: inset 0 0 140px 20px rgba(214, 52, 44, var(--vig));
+      transition: box-shadow 1s ease;
+    }
+
+    body.dead {
+      filter: saturate(.5)
+    }
+
+    /* ---------- Шапка зі станом героя ---------- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    h1 {
+      font: 700 17px/1.2 var(--serif);
+      margin: 0;
+      flex: 1;
+      min-width: 0
+    }
+
+    h1 small {
+      display: block;
+      font: 400 13px/1.3 var(--sans);
+      color: var(--muted)
+    }
+
+    #restart {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    #restart.confirm {
+      color: var(--blood);
+      border-color: var(--blood)
+    }
+
+    .vitals {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px
+    }
+
+    #ecg {
+      width: 84px;
+      height: 32px;
+      flex: none;
+      overflow: visible
+    }
+
+    #ecg path {
+      fill: none;
+      stroke: var(--blood);
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    #ecg .base {
+      stroke: var(--line);
+      stroke-width: 2
+    }
+
+    #ecg .live {
+      stroke-dasharray: 34 66;
+      stroke-dashoffset: 100;
+      animation: beat var(--beat) linear infinite;
+    }
+
+    body[data-danger="4"] #ecg .live {
+      animation: none;
+      stroke-dasharray: none
+    }
+
+    @keyframes beat {
+      to {
+        stroke-dashoffset: 0
+      }
+    }
+
+    #danger {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--blood);
+      flex: 1
+    }
+
+    body[data-danger="0"] #danger {
+      color: var(--ok)
+    }
+
+    .steps {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px
+    }
+
+    .step {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line)
+    }
+
+    .step.done {
+      background: var(--muted)
+    }
+
+    .step.now {
+      background: var(--accent)
+    }
+
+    #stage {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    #hud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px
+    }
+
+    #hud:empty {
+      display: none
+    }
+
+    .chip {
+      font-size: 14px;
+      padding: 2px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel)
+    }
+
+    .chip.item {
+      border-color: var(--accent);
+      color: var(--accent)
+    }
+
+    /* ---------- Історія ---------- */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px max(18px, env(safe-area-inset-left, 0px)) 24px
+    }
+
+    #log p {
+      margin: 0 0 16px;
+      font: 19px/1.65 var(--serif);
+      animation: fade .4s ease-out
+    }
+
+    #log .q {
+      font: 600 17px/1.5 var(--sans);
+      color: var(--accent);
+      margin-top: 26px
+    }
+
+    #log .you {
+      font: italic 16px/1.4 var(--sans);
+      color: var(--muted);
+      text-align: right
+    }
+
+    #log .bad {
+      color: var(--blood)
+    }
+
+    #log .good {
+      color: var(--ok)
+    }
+
+    #log .day {
+      font: 700 16px/1.4 var(--sans);
+      letter-spacing: .04em;
+      padding-top: 18px;
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+      color: var(--accent)
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .end {
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 24px 0 8px;
+      background: var(--panel);
+      text-align: center
+    }
+
+    .end span {
+      display: block;
+      color: var(--muted);
+      font-size: 15px
+    }
+
+    .end b {
+      display: block;
+      font: 700 28px/1.2 var(--serif);
+      margin: 6px 0 4px;
+      color: var(--accent)
+    }
+
+    body.dead .end {
+      border-color: var(--blood)
+    }
+
+    body.dead .end b {
+      color: var(--blood)
+    }
+
+    /* ---------- Керування в зоні великого пальця ---------- */
+    #controls {
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      background: linear-gradient(to top, var(--bg) 78%, transparent);
+      padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 640px;
+      margin: 0 auto
+    }
+
+    .opt,
+    #go {
+      min-height: 54px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--btn);
+      color: var(--text);
+      font: 600 17px/1.3 var(--sans);
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+
+    .opt:active,
+    #go:active {
+      background: var(--btn-active);
+      transform: scale(.985)
+    }
+
+    @media (hover:hover) {
+
+      .opt:hover,
+      #go:hover {
+        border-color: var(--accent)
+      }
+    }
+
+    .row {
+      display: flex;
+      gap: 10px
+    }
+
+    .row input {
+      flex: 1;
+      min-width: 0;
+      min-height: 54px;
+      padding: 0 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      font: 17px var(--sans);
+      /* ≥16px: iOS не наближає екран */
+    }
+
+    #go {
+      text-align: center;
+      color: var(--accent);
+      flex: none
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      #log p {
+        animation: none
+      }
+
+      #ecg .live {
+        animation: none;
+        stroke-dasharray: none
+      }
+
+      body::after {
+        transition: none
+      }
+    }
+
+    @media (min-width:700px) {
+      body {
+        font-size: 19px
+      }
+
+      h1 {
+        font-size: 20px
+      }
+    }
+  </style>
+</head>
+
+<body data-danger="0">
+  <header>
+    <div class="top">
+      <h1>Кришталеве озеро <small>Вижити до світанку</small></h1>
+      <button id="restart" type="button">Заново</button>
+    </div>
+    <div class="vitals" aria-live="polite">
+      <svg id="ecg" viewBox="0 0 100 32" aria-hidden="true">
+        <path class="base" pathLength="100" d="M0 16h28l5-9 6 20 6-26 6 15h49" />
+        <path class="live" pathLength="100" d="M0 16h28l5-9 6 20 6-26 6 15h49" />
+      </svg>
+      <div id="danger">Спокій</div>
+    </div>
+    <div class="steps" aria-hidden="true"><i class="step"></i><i class="step"></i><i class="step"></i><i
+        class="step"></i></div>
+    <div id="stage">Дорога</div>
+    <div id="hud"></div>
+  </header>
+  <main>
+    <div id="log" aria-live="polite"></div>
+  </main>
+  <div id="controls"></div>
+
+  <script>
+    "use strict";
+
+    const $ = id => document.getElementById(id);
+    const logEl = $("log"), ctl = $("controls"), hud = $("hud"), restartBtn = $("restart");
+    const steps = [...document.querySelectorAll(".step")];
+    const STAGES = ["Дорога", "Табір", "Лабіринт", "Фінал"];
+    const DANGER = ["Спокій", "Тривога", "Небезпека", "Смертельна загроза", "Пульсу немає"];
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let S;
+
+    /* ---------- Стан гри (ті самі змінні, що й в оригіналі) ---------- */
+    function newState() {
+      S = { name: "", cls: "", alive: true, key: false, aidkit: false, flashlight: false, hammer: false, gold: false };
+    }
+
+    /* ---------- Інтерфейс ---------- */
+    function setDanger(n) {
+      document.body.dataset.danger = n;
+      $("danger").textContent = DANGER[n];
+    }
+    function setStage(i) {
+      $("stage").textContent = i < 3 ? `Етап ${i + 1} з 3: ${STAGES[i]}` : STAGES[3];
+      steps.forEach((s, k) => { s.className = "step" + (k < i ? " done" : k === i ? " now" : ""); });
+    }
+    function renderHud() {
+      hud.replaceChildren();
+      const add = (t, c) => { const s = document.createElement("span"); s.className = "chip " + (c || ""); s.textContent = t; hud.append(s); };
+      if (S.name) add(`${S.name}, ${S.cls || "…"}`);
+      if (S.aidkit) add("аптечка", "item");
+      if (S.flashlight) add("ліхтарик", "item");
+      if (S.hammer) add("молоток", "item");
+      if (S.key) add("ключ", "item");
+      if (S.gold) add("золото", "item");
+    }
+    function say(text, cls) {
+      const p = document.createElement("p");
+      p.textContent = text;
+      if (cls) p.className = cls;
+      logEl.append(p);
+      return p;
+    }
+    function toEnd() {
+      requestAnimationFrame(() => scrollTo({ top: document.body.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" }));
+    }
+    function panel() {
+      const box = document.createElement("div");
+      box.className = "stack";
+      ctl.replaceChildren(box);
+      return box;
+    }
+
+    /* Вибір варіанта кнопками */
+    function choices(question, options, danger) {
+      if (danger !== undefined) setDanger(danger);
+      say(question, "q");
+      const box = panel();
+      options.forEach(([label, next]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "opt"; b.textContent = label;
+        b.onclick = () => { ctl.replaceChildren(); say("› " + label, "you"); next(); renderHud(); };
+        box.append(b);
+      });
+      toEnd();
+    }
+
+    /* Введення тексту: ім’я та пароль */
+    function ask(question, placeholder, required, next, danger) {
+      if (danger !== undefined) setDanger(danger);
+      say(question, "q");
+      const row = document.createElement("div");
+      row.className = "stack row";
+      const input = document.createElement("input");
+      input.type = "text"; input.placeholder = placeholder; input.autocomplete = "off";
+      input.autocapitalize = "none"; input.enterKeyHint = "done"; input.setAttribute("aria-label", question);
+      const go = document.createElement("button");
+      go.type = "button"; go.id = "go"; go.textContent = "Далі";
+      const submit = () => {
+        const v = input.value.trim();
+        if (required && !v) { input.focus(); return; }
+        ctl.replaceChildren(); say("› " + (v || "…"), "you"); next(v); renderHud();
+      };
+      go.onclick = submit;
+      input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+      row.append(input, go);
+      ctl.replaceChildren(row);
+      toEnd();
+    }
+
+    /* ---------- Сюжет ---------- */
+    function start() {
+      newState();
+      logEl.replaceChildren(); ctl.replaceChildren();
+      document.body.classList.remove("dead");
+      setStage(0); renderHud();
+      say("У таборі «Кришталеве озеро» відбувалися вбивства. Ти їдеш туди, і назад дороги, схоже, немає.");
+      ask("Введи своє ім’я", "Ім’я героя", true, v => {
+        S.name = v;
+        say(`${S.name}, ти приїхав у табір «Кришталеве озеро», у якому відбувалися вбивства.`);
+        pickClass();
+      }, 0);
+    }
+
+    function pickClass() {
+      choices("Вибери клас:", [
+        ["Вожатий", () => { S.cls = "вожатий"; S.aidkit = true; say("У персонажа є аптечка."); direction(); }],
+        ["Мирний", () => { S.cls = "мирний"; S.flashlight = true; say("У персонажа є ліхтарик."); direction(); }],
+        ["Загадковий персонаж", () => { S.cls = "загадковий персонаж"; S.hammer = true; say("У персонажа є молоток."); direction(); }]
+      ], 0);
+    }
+
+    function direction() {
+      choices("Ти йдеш до табору, перед тобою 3 стежки: прямо, наліво та направо. Обери свій шлях.", [
+        ["Прямо", () => { say("Ти доходиш до міста, де тебе підвозять до табору."); room(); }],
+        ["Наліво", forest],
+        ["Направо", () => { say("Стежка довга й порожня, але зрештою виводить тебе до табору."); room(); }]
+      ], 1);
+    }
+
+    function forest() {
+      choices("Ти заходиш у ліс, де зустрічаєш лісника, який пропонує провести тебе до табору. Погодишся?", [
+        ["Так", forestYes],
+        ["Ні", () => { say("Ти відмовляєшся від допомоги. Трохи поблукавши по лісу, ти добираєшся до табору."); room(); }]
+      ], 2);
+    }
+
+    function forestYes() {
+      if (S.hammer) {
+        choices("Використати молоток, щоб захиститися від лісника?", [
+          ["Так", () => { say("Ти відбиваєшся від лісника за допомогою молотка."); say("Після цього, трохи поблукавши по лісу, ти добираєшся до табору."); room(); }],
+          ["Ні", () => die("Лісник вбиває тебе.")]
+        ], 3);
+      } else if (S.flashlight) {
+        choices("Втекти від лісника чи битися?", [
+          ["Втекти", () => choices("Ти тікаєш від лісника, надворі ніч. Використати ліхтарик, щоб знайти дорогу?", [
+            ["Так", () => { say("Ти дійшов до табору."); room(); }],
+            ["Ні", () => die("У темряві ти не помічаєш, як вертаєшся на те саме місце. Лісник вбиває тебе.")]
+          ], 3)],
+          ["Битися", () => die("Лісник вбиває тебе.")]
+        ], 3);
+      } else {
+        say("Лісник відводить тебе до табору.");
+        room();
+      }
+    }
+
+    function room() {
+      setStage(1);
+      choices("Дійшовши до табору, ти отримуєш на вибір 3 кімнати. В яку заселишся?", [
+        ["Кімната 1", room1],
+        ["Кімната 2", () => { say("Ти заселився та ліг на ліжко."); maze(); }],
+        ["Кімната 3", safe]
+      ], 1);
+    }
+
+    function room1() {
+      choices("Ти увійшов у темну кімнату та знайшов дуже дивний предмет, що пікає. Що зробиш?", [
+        ["Викинути", () => { say("Ти викидаєш предмет через вікно, через кілька секунд чуєш вибух. З тобою все добре."); maze(); }],
+        ["Розібрати", () => { say("Ти пробуєш зняти задню кришку, придавлюєш трохи сильніше і… вибух."); die("Ти помираєш."); }],
+        ["Нічого не робити", () => { say("Ти вирішуєш залишити все як є. Минає 10 хвилин і… вибух."); die("Ти помираєш."); }]
+      ], 3);
+    }
+
+    function safe() {
+      say("У шафі ти знаходиш старий сейф із запискою: «Має багато клавіш, але не відчиняє дверей». Нижче напис: «2 спроби».");
+      attempt(1);
+    }
+
+    function attempt(n) {
+      ask(n === 1 ? "Ти вводиш першу спробу" : "Ти вводиш другу спробу", "Пароль", false, v => {
+        if (v.toLowerCase() === "клавіатура") {
+          say("Пароль вірний! Сейф відчиняється, а в ньому золото.", "good");
+          S.gold = true; maze();
+        } else if (n === 1) {
+          say("Пароль не вірний, є ще 1 спроба.", "bad"); attempt(2);
+        } else {
+          say("Пароль не вірний, всі спроби вичерпано.", "bad"); maze();
+        }
+      }, 2);
+    }
+
+    function maze() {
+      setStage(2);
+      say("НАСТУПНИЙ ДЕНЬ. На прогулянці з групою ти відстаєш. Повернувши стежкою не туди, ти помічаєш перед собою лабіринт.", "day");
+      choices("Зайшовши в лабіринт, ти бачиш 3 шляхи: червоний, синій та зелений. Червоний — швидкий, але дуже небезпечний. Зелений — довгий, але безпечний. Синій — невідомо.", [
+        ["Червоний", () => {
+          if (S.aidkit) {
+            say("Йдучи лабіринтом, ти ранеш ногу. За допомогою аптечки ти надаєш собі допомогу та продовжуєш шлях.");
+            say("Ти вийшов з лабіринту.");
+            ending();
+          } else {
+            say("Йдучи лабіринтом, ти ранеш ногу й більше не можеш іти.");
+            die(`${S.name} помирає в лабіринті.`);
+          }
+        }],
+        ["Синій", () => choices("Ти йдеш темним коридором і бачиш поворот наліво. Підеш туди?", [
+          ["Так", () => { say("Ти знаходиш ключ. Далі тупик, тому ти повертаєшся на основну дорогу."); S.key = true; say("Ти виходиш з лабіринту."); ending(); }],
+          ["Ні", () => { say("Ти минаєш поворот і йдеш далі. Зрештою коридор виводить тебе з лабіринту."); ending(); }]
+        ], 2)],
+        ["Зелений", () => { say("Ти довго йдеш лабіринтом та виходиш з нього."); ending(); }]
+      ], 3);
+    }
+
+    function die(text) {
+      say(text, "bad");
+      S.alive = false;
+      say("Почни гру спочатку.", "bad");
+      ending();
+    }
+
+    /* ---------- Фінали ---------- */
+    function ending() {
+      let title;
+      if (!S.alive) title = "Ціною в життя";
+      else if (S.key) title = S.gold ? "Легенда міста" : "Рятівник";
+      else title = S.gold ? "Багатий утікач" : "dark siti";
+
+      setStage(3);
+      setDanger(S.alive ? 0 : 4);
+      document.body.classList.toggle("dead", !S.alive);
+
+      const box = document.createElement("div");
+      box.className = "end";
+      const lead = document.createElement("span"); lead.textContent = S.alive ? "Ти вижив. Ти отримав фінал" : "Ти не вижив. Ти отримав фінал";
+      const name = document.createElement("b"); name.textContent = `«${title}»`;
+      box.append(lead, name);
+      logEl.append(box);
+
+      const again = document.createElement("button");
+      again.type = "button"; again.className = "opt"; again.textContent = "Зіграти ще раз";
+      again.onclick = start;
+      panel().append(again);
+      renderHud(); toEnd();
+    }
+
+    /* ---------- Кнопка «Заново» з підтвердженням, щоб не втратити прогрес випадково ---------- */
+    let confirmTimer;
+    restartBtn.onclick = () => {
+      if (restartBtn.classList.contains("confirm")) {
+        clearTimeout(confirmTimer);
+        restartBtn.classList.remove("confirm"); restartBtn.textContent = "Заново";
+        start();
+        return;
+      }
+      restartBtn.classList.add("confirm"); restartBtn.textContent = "Точно?";
+      confirmTimer = setTimeout(() => { restartBtn.classList.remove("confirm"); restartBtn.textContent = "Заново"; }, 3000);
+    };
+
+    start();
+  </script>
+</body>
+
+</html>
